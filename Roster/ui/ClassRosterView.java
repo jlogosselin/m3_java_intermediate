@@ -64,11 +64,11 @@ public class ClassRosterView {
         io.readString("Please hit enter to continue.");
     }
 
-    public void displayDisplayAllBanner() {
+    public void displayAllBanner() {
         io.print("=== Display All Students ===");
     }
 
-    public void displayDisplayStudentBanner () {
+    public void displayStudentBanner () {
         io.print("=== Display Student ===");
     }
 

@@ -1,8 +1,11 @@
 package Roster.controller;
 
 import Roster.dao.ClassRosterDao;
-import Roster.dao.ClassRosterDaoException;
+import Roster.dao.ClassRosterPersistenceException;
 import Roster.dto.Student;
+import Roster.service.ClassRosterDataValidationException;
+import Roster.service.ClassRosterDuplicateIdException;
+import Roster.service.ClassRosterServiceLayer;
 import Roster.ui.ClassRosterView;
 
 import java.util.List;
@@ -12,12 +15,22 @@ public class ClassRosterController {
     public ClassRosterController(){}
 
     private ClassRosterView view;
-    private ClassRosterDao dao;
+    //private ClassRosterDao dao;
+    private ClassRosterServiceLayer service;
 
+    /*
     public ClassRosterController(ClassRosterView v, ClassRosterDao d){
         this.view = v;
         this.dao = d;
     }
+
+    */
+    public ClassRosterController(ClassRosterServiceLayer service, ClassRosterView view) {
+        this.service = service;
+        this.view = view;
+    }
+
+
 
     /*
     Why are we passing an instance of the ClassRosterView into our constructor?
@@ -63,7 +76,7 @@ public class ClassRosterController {
 
             }
             exitMessage();
-        } catch (ClassRosterDaoException e) {
+        } catch (ClassRosterPersistenceException e) {
             view.displayErrorMessage(e.getMessage());
         }
     }
@@ -72,32 +85,51 @@ public class ClassRosterController {
         return view.printMenuAndGetSelection();
     }
 
-    private void createStudent() throws ClassRosterDaoException {
+    private void createStudent() throws ClassRosterPersistenceException {
         view.displayCreateStudentBanner();
-        Student newStudent = view.getNewStudentInfo();
-        dao.addStudent(newStudent.getStudentId(), newStudent);
-        view.displayCreateSuccessBanner();
+        boolean hasErrors = false;
+        do {
+            Student currentStudent = view.getNewStudentInfo();
+            try {
+                service.createStudent(currentStudent);
+                view.displayCreateSuccessBanner();
+                hasErrors = false;
+            } catch (ClassRosterDuplicateIdException | ClassRosterDataValidationException e) {
+                hasErrors = true;
+                view.displayErrorMessage(e.getMessage());
+            }
+        } while (hasErrors);
     }
 
-    private void listStudents() throws ClassRosterDaoException {
-        view.displayDisplayAllBanner();
-        List<Student> studentList = dao.getAllStudents();
+    private void listStudents() throws ClassRosterPersistenceException {
+        List<Student> studentList = service.getAllStudents();
         view.displayStudentList(studentList);
     }
 
-    private void viewStudent() throws ClassRosterDaoException {
-        view.displayDisplayStudentBanner();
+    private void viewStudent() throws ClassRosterPersistenceException {
         String studentId = view.getStudentIdChoice();
-        Student student = dao.getStudent(studentId);
+        Student student = service.getStudent(studentId);
         view.displayStudent(student);
     }
 
-    private void removeStudent() throws ClassRosterDaoException {
+    ////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////
+
+                                    // keep an eye on this!
+
+    private void removeStudent() throws ClassRosterPersistenceException {
         view.displayRemoveStudentBanner();
         String studentId = view.getStudentIdChoice();
-        Student removedStudent = dao.removeStudent(studentId);
-        view.displayRemoveResult(removedStudent);
+        service.removeStudent(studentId);
+        Student student = service.getStudent(studentId);
+        view.displayRemoveResult(student);
     }
+
+    ////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////////
+
 
     private void unknownCommand() {
         view.displayUnknownCommandBanner();
