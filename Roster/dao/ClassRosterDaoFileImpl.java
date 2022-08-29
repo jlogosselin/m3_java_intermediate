@@ -1,6 +1,7 @@
 package Roster.dao;
 
 import Roster.dto.Student;
+import org.junit.jupiter.api.BeforeEach;
 
 import java.io.*;
 import java.util.*;
@@ -10,10 +11,36 @@ import java.util.*;
 public class ClassRosterDaoFileImpl implements ClassRosterDao{
 
     private Map<String, Student> students = new HashMap<>();
-    public static final String ROSTER_FILE = "roster.txt";
+    //new roster text file
+    private final String ROSTER_FILE;
+    //public static final String ROSTER_FILE = "roster.txt";
     public static final String DELIMITER = "::";
+    ClassRosterDao testDao;
 
-    public ClassRosterDaoFileImpl(){}
+    public ClassRosterDaoFileImpl(){
+        ROSTER_FILE = "roster.txt";
+    }
+
+    public ClassRosterDaoFileImpl(String rosterTextFile){
+        ROSTER_FILE = rosterTextFile;
+    }
+
+    /*
+    This way, before every test runs, we will have created a new
+    blank testroster.txt file using the FileWriter, and then used
+    that as our fileName when instantiating our testDao - both ensuring
+    that we are starting with a fresh, empty Dao object, as well as
+    minimizing our interference with the normal application's data
+    stored in the roster.txt file.
+     */
+
+    @BeforeEach
+    public void setUp() throws Exception{
+        String testFile = "testroster.txt";
+        // Use the FileWriter to quickly blank the file
+        new FileWriter(testFile);
+        testDao = new ClassRosterDaoFileImpl(testFile);
+    }
 
     @Override
     public Student addStudent(String studentId, Student student) throws ClassRosterPersistenceException {
